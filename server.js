@@ -31,10 +31,10 @@ const db = getFirestore(app);
 
 // Crear un servidor Express
 const Api = express();
-const port = 3001;
+const port = process.env.PORT;
 
 Api.use(express.json());
-Api.use(cors()); // Habilitar CORS
+Api.use(cors()); 
 
 
 const SECRET_KEY = "HKAHS22SJX4223DXE";
@@ -364,7 +364,9 @@ Api.patch("/update_user/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Iniciar el servidor Express
+// Iniciar el servidor
 Api.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
+
+module.exports = Api;
