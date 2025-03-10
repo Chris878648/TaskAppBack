@@ -52,6 +52,10 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+Api.get("/", (req, res) => {
+  res.status(200).json({ message: "API is working!" });
+});
+
 // Función para registrar un usuario
 Api.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
