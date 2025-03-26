@@ -56,10 +56,24 @@ Api.get("/", (req, res) => {
   res.status(200).json({ message: "API is working!" });
 });
 
-// Función para registrar un usuario
 Api.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
   try {
+    // Verificar si el correo electrónico o el nombre de usuario ya existen
+    const emailQuery = query(collection(db, "Users"), where("email", "==", email));
+    const usernameQuery = query(collection(db, "Users"), where("username", "==", username));
+    
+    const emailSnapshot = await getDocs(emailQuery);
+    const usernameSnapshot = await getDocs(usernameQuery);
+
+    if (!emailSnapshot.empty) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    if (!usernameSnapshot.empty) {
+      return res.status(400).json({ message: "Username already in use" });
+    }
+
     // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -315,6 +329,32 @@ Api.patch("/tasks/:taskId/status", authenticateToken, async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating task status: " + error.message });
+  }
+});
+
+// Función para modificar el estado de una tarea personal 
+Api.patch("/tasks_personal/:taskId/status", authenticateToken, async (req, res) => {
+  const { taskId } = req.params;
+  const { status } = req.body;
+
+  try {
+    const taskDocRef = doc(db, "Tasks", taskId);
+    const taskDoc = await getDoc(taskDocRef);
+
+    if (!taskDoc.exists()) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    const task = taskDoc.data();
+    if (task.userId !== req.user.userId) {
+      return res.status(403).json({ message: "You can only update your own tasks" });
+    }
+
+    await updateDoc(taskDocRef, { status });
+
+    res.status(200).json({ message: "Task status updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating task status: " + error.message });
   }
 });
 
