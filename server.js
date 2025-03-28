@@ -395,20 +395,24 @@ Api.patch("/update_user/:userId", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Verificar si el username o email ya existen en otro usuario
     const usersCollection = collection(db, "Users");
-    const q = query(usersCollection, 
-      or(
-        where("username", "==", username),
-        where("email", "==", email)
-      )
-    );
+    
+    // Verificar si el username ya existe en otro usuario
+    const usernameQuery = query(usersCollection, where("username", "==", username));
+    const usernameSnapshot = await getDocs(usernameQuery);
+    const usernameExists = usernameSnapshot.docs.some(doc => doc.id !== userId);
 
-    const querySnapshot = await getDocs(q);
-    const existingUsers = querySnapshot.docs.filter(doc => doc.id !== userId);
+    if (usernameExists) {
+      return res.status(400).json({ message: "Username is already in use" });
+    }
 
-    if (existingUsers.length > 0) {
-      return res.status(400).json({ message: "Username or email already in use" });
+    // Verificar si el email ya existe en otro usuario
+    const emailQuery = query(usersCollection, where("email", "==", email));
+    const emailSnapshot = await getDocs(emailQuery);
+    const emailExists = emailSnapshot.docs.some(doc => doc.id !== userId);
+
+    if (emailExists) {
+      return res.status(400).json({ message: "Email is already in use" });
     }
 
     const updates = {};
