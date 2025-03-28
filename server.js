@@ -395,6 +395,22 @@ Api.patch("/update_user/:userId", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Verificar si el username o email ya existen en otro usuario
+    const usersCollection = collection(db, "Users");
+    const q = query(usersCollection, 
+      or(
+        where("username", "==", username),
+        where("email", "==", email)
+      )
+    );
+
+    const querySnapshot = await getDocs(q);
+    const existingUsers = querySnapshot.docs.filter(doc => doc.id !== userId);
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ message: "Username or email already in use" });
+    }
+
     const updates = {};
     if (username) updates.username = username;
     if (email) updates.email = email;
