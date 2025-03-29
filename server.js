@@ -115,7 +115,7 @@ Api.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign({ userId, email: user.email }, SECRET_KEY, {
-      expiresIn: "10m",
+      expiresIn: "30m",
     });
 
     await updateDoc(doc(db, "Users", userDoc.id), {
